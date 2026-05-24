@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DCA Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100vh;background:#080c18;font-family:'Rajdhani',sans-serif;color:#c0d8f0;overscroll-behavior:none}
+
+.app{max-width:480px;margin:0 auto;padding:0 0 32px}
+
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:#080c18;
+  border-bottom:1px solid rgba(0,255,231,0.1);
+  padding:env(safe-area-inset-top,12px) 20px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.topbar-left{display:flex;flex-direction:column}
+.topbar-title{font-family:'Share Tech Mono',monospace;font-size:14px;color:#00ffe7;letter-spacing:3px;text-transform:uppercase}
+.topbar-sub{font-size:11px;color:#3a5a7a;letter-spacing:1px;margin-top:1px}
+.topbar-badge{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:#00ffe7;
+  border:1px solid rgba(0,255,231,0.3);
+  border-radius:6px;padding:4px 8px;letter-spacing:1px;
+}
+
+.px{padding:0 16px}
+
+.big-card{
+  background:rgba(0,255,231,0.05);
+  border-bottom:1px solid rgba(0,255,231,0.15);
+  padding:20px 16px 16px;
+  text-align:center;
+}
+.big-label{font-size:10px;color:#00ffe7;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px}
+.big-val{font-family:'Share Tech Mono',monospace;font-size:34px;color:#00ffe7;letter-spacing:1px;line-height:1}
+.big-sub{font-size:11px;color:#2a5a4a;margin-top:6px;letter-spacing:1px}
+
+.metrics-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(0,255,231,0.08);margin-bottom:1px}
+.metric-cell{background:#080c18;padding:14px 16px}
+.metric-lbl{font-size:10px;color:#4a6a8a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.metric-num{font-family:'Share Tech Mono',monospace;font-size:16px;color:#c0d8f0}
+.metric-num.gold{color:#ffe760}
+.metric-num.teal{color:#00ffe7}
+
+.divider{height:1px;background:rgba(0,255,231,0.08);margin:0}
+.section-gap{height:16px}
+
+.sec-hdr{padding:14px 16px 8px;display:flex;align-items:center;gap:8px}
+.sec-hdr-line{width:3px;height:14px;background:#00ffe7;border-radius:2px;flex-shrink:0}
+.sec-hdr-txt{font-size:10px;color:#4a7aaa;letter-spacing:2px;text-transform:uppercase}
+
+.ctrl-list{padding:0 16px;display:flex;flex-direction:column;gap:2px}
+.ctrl-item{
+  background:#0d1525;
+  border:1px solid #141f35;
+  border-radius:10px;
+  padding:14px 16px;
+  margin-bottom:6px;
+}
+.ctrl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ctrl-name{font-size:13px;color:#7090b0;letter-spacing:0.5px}
+.ctrl-val{font-family:'Share Tech Mono',monospace;font-size:15px;color:#00ffe7}
+
+input[type=range]{
+  width:100%;-webkit-appearance:none;appearance:none;
+  height:4px;background:#1a2a3a;border-radius:2px;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;
+  border-radius:50%;background:#00ffe7;cursor:pointer;
+  border:4px solid #080c18;box-shadow:0 0 10px rgba(0,255,231,0.4);
+}
+
+.chart-wrap{padding:0 16px}
+.chart-card{
+  background:#0d1525;border:1px solid #141f35;border-radius:12px;padding:14px;
+}
+.chart-inner{position:relative;height:220px}
+.legend{display:flex;gap:16px;margin-top:10px;padding-left:2px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#4a6a8a}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+.bars-wrap{padding:0 16px}
+.bars-card{background:#0d1525;border:1px solid #141f35;border-radius:12px;padding:16px}
+.bar-row{margin-bottom:12px}
+.bar-row:last-child{margin-bottom:0}
+.bar-rl{display:flex;justify-content:space-between;margin-bottom:6px}
+.bar-rl span{font-size:12px;color:#7090b0}
+.bar-rl .barval{font-family:'Share Tech Mono',monospace;font-size:12px}
+.bar-track{background:#1a2a3a;border-radius:3px;height:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.6s}
+
+.summary-wrap{padding:0 16px}
+.summary-card{background:#0d1525;border:1px solid #141f35;border-radius:12px;overflow:hidden}
+.sum-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.sum-row:last-child{border-bottom:none}
+.sum-key{font-size:13px;color:#4a6a8a}
+.sum-val{font-family:'Share Tech Mono',monospace;font-size:13px;color:#c0d8f0}
+.sum-val.gold{color:#ffe760}
+.sum-val.teal{color:#00ffe7}
+
+.ratio-wrap{padding:0 16px;margin-top:6px}
+.ratio-card{
+  background:rgba(255,231,96,0.05);border:1px solid rgba(255,231,96,0.2);
+  border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between;
+}
+.ratio-left{}
+.ratio-lbl{font-size:10px;color:#8a7a3a;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.ratio-num{font-family:'Share Tech Mono',monospace;font-size:28px;color:#ffe760}
+.ratio-desc{font-size:11px;color:#6a5a2a;margin-top:3px}
+
+.scan{height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,231,0.2),transparent);margin:4px 16px}
+
+.bottombar{
+  padding:16px 16px env(safe-area-inset-bottom,16px);
+  border-top:1px solid rgba(0,255,231,0.08);
+  margin-top:8px;
+  text-align:center;
+}
+.bottombar-txt{font-size:10px;color:#2a3a4a;letter-spacing:1.5px;font-family:'Share Tech Mono',monospace}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">DCA Matrix</div>
+      <div class="topbar-sub">Compound Growth Engine</div>
+    </div>
+    <div class="topbar-badge">v2.0</div>
+  </div>
+
+  <div class="big-card">
+    <div class="big-label">มูลค่าพอร์ตสุดท้าย</div>
+    <div class="big-val" id="mTotal">฿0</div>
+    <div class="big-sub" id="mSub">หลังจาก 20 ปี · อัตรา 15%</div>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-cell">
+      <div class="metric-lbl">เงินต้นสะสม</div>
+      <div class="metric-num" id="mPrincipal">฿0</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">กำไรทบต้น</div>
+      <div class="metric-num gold" id="mProfit">฿0</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-gap"></div>
+
+  <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-hdr-txt">ปรับพารามิเตอร์</div></div>
+
+  <div style="padding:0 16px;display:flex;flex-direction:column;gap:6px">
+
+    <div class="ctrl-item">
+      <div class="ctrl-top">
+        <div class="ctrl-name">เงินลงทุน / เดือน</div>
+        <div class="ctrl-val" id="vMonthly">฿2,000</div>
+      </div>
+      <input type="range" id="sMonthly" min="500" max="20000" step="500" value="2000">
+    </div>
+
+    <div class="ctrl-item">
+      <div class="ctrl-top">
+        <div class="ctrl-name">ผลตอบแทนต่อปี</div>
+        <div class="ctrl-val" id="vRate">15%</div>
+      </div>
+      <input type="range" id="sRate" min="1" max="30" step="1" value="15">
+    </div>
+
+    <div class="ctrl-item">
+      <div class="ctrl-top">
+        <div class="ctrl-name">ระยะเวลา</div>
+        <div class="ctrl-val" id="vYears">20 ปี</div>
+      </div>
+      <input type="range" id="sYears" min="1" max="40" step="1" value="20">
+    </div>
+
+  </div>
+
+  <div class="section-gap"></div>
+  <div class="scan"></div>
+  <div class="section-gap"></div>
+
+  <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-hdr-txt">Timeline Growth</div></div>
+  <div class="chart-wrap">
+    <div class="chart-card">
+      <div class="chart-inner">
+        <canvas id="cpChart" role="img" aria-label="กราฟแท่งแสดงมูลค่าพอร์ต DCA รายปี">กราฟ DCA</canvas>
+      </div>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#1a3a5a"></div>เงินต้น</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#00ffe7"></div>ดอกเบี้ยทบต้น</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-hdr-txt">สัดส่วนพอร์ต</div></div>
+  <div class="bars-wrap">
+    <div class="bars-card">
+      <div class="bar-row">
+        <div class="bar-rl">
+          <span>เงินต้น</span>
+          <span class="barval" id="pPrincipal" style="color:#7090b0">0%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="bPrincipal" style="background:#1a3a5a;width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-rl">
+          <span>ดอกเบี้ยทบต้น</span>
+          <span class="barval" id="pProfit" style="color:#00ffe7">0%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="bProfit" style="background:#00ffe7;width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <div class="sec-hdr"><div class="sec-hdr-line"></div><div class="sec-hdr-txt">สรุปผลลงทุน</div></div>
+  <div class="summary-wrap">
+    <div class="summary-card">
+      <div class="sum-row">
+        <span class="sum-key">เงินลงทุน / เดือน</span>
+        <span class="sum-val" id="iMonthly">฿2,000</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-key">จำนวนงวดทั้งหมด</span>
+        <span class="sum-val" id="iPeriods">240 เดือน</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-key">อัตราดอกเบี้ย</span>
+        <span class="sum-val teal" id="iRate">15% / ปี</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-key">เงินต้นทั้งหมด</span>
+        <span class="sum-val" id="iPrin2">฿0</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-key">กำไรทบต้น</span>
+        <span class="sum-val gold" id="iProfit2">฿0</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-key">มูลค่าพอร์ตสุดท้าย</span>
+        <span class="sum-val teal" id="iTotal2">฿0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <div class="ratio-wrap">
+    <div class="ratio-card">
+      <div class="ratio-left">
+        <div class="ratio-lbl">กำไร / เงินต้น</div>
+        <div class="ratio-num" id="mRatio">0.00x</div>
+        <div class="ratio-desc" id="mRatioDesc">ลงทุน ฿480K ได้กำไร ฿0</div>
+      </div>
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <circle cx="20" cy="20" r="18" stroke="rgba(255,231,96,0.2)" stroke-width="1.5"/>
+        <path d="M12 28 L20 10 L28 28" stroke="#ffe760" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="10" r="2.5" fill="#ffe760"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+  <div class="scan"></div>
+
+  <div class="bottombar">
+    <div class="bottombar-txt">DCA Matrix · ใช้สูตร Annuity Due เหมือน ธปท.</div>
+  </div>
+
+</div>
+
+<script>
+let chart=null;
+function fmtB(n){return '฿'+Math.round(n).toLocaleString('th-TH')}
+
+function calcDCA(monthly,rateAnnual,years){
+  const r=rateAnnual/100/12;
+  const months=years*12;
+  const totalArr=[],principalArr=[],profitArr=[];
+  let portfolio=0;
+  for(let m=1;m<=months;m++){
+    portfolio=portfolio*(1+r)+monthly;
+    if(m%12===0){
+      const p=monthly*m;
+      totalArr.push(Math.round(portfolio));
+      principalArr.push(Math.round(p));
+      profitArr.push(Math.round(portfolio-p));
+    }
+  }
+  return{totalArr,principalArr,profitArr,finalValue:portfolio,principal:monthly*months};
+}
+
+function update(){
+  const monthly=parseInt(document.getElementById('sMonthly').value);
+  const rate=parseInt(document.getElementById('sRate').value);
+  const years=parseInt(document.getElementById('sYears').value);
+
+  document.getElementById('vMonthly').textContent='฿'+monthly.toLocaleString('th-TH');
+  document.getElementById('vRate').textContent=rate+'%';
+  document.getElementById('vYears').textContent=years+' ปี';
+
+  const{totalArr,principalArr,profitArr,finalValue,principal}=calcDCA(monthly,rate,years);
+  const profit=finalValue-principal;
+  const ratio=principal>0?(profit/principal):0;
+  const pp=Math.round((principal/finalValue)*100);
+  const ip=100-pp;
+
+  document.getElementById('mTotal').textContent=fmtB(finalValue);
+  document.getElementById('mSub').textContent='หลังจาก '+years+' ปี · อัตรา '+rate+'%';
+  document.getElementById('mPrincipal').textContent=fmtB(principal);
+  document.getElementById('mProfit').textContent=fmtB(profit);
+
+  document.getElementById('pPrincipal').textContent=pp+'%';
+  document.getElementById('pProfit').textContent=ip+'%';
+  document.getElementById('bPrincipal').style.width=pp+'%';
+  document.getElementById('bProfit').style.width=ip+'%';
+
+  document.getElementById('iMonthly').textContent=fmtB(monthly);
+  document.getElementById('iPeriods').textContent=(years*12)+' เดือน';
+  document.getElementById('iRate').textContent=rate+'% / ปี';
+  document.getElementById('iPrin2').textContent=fmtB(principal);
+  document.getElementById('iProfit2').textContent=fmtB(profit);
+  document.getElementById('iTotal2').textContent=fmtB(finalValue);
+  document.getElementById('mRatio').textContent=ratio.toFixed(2)+'x';
+  document.getElementById('mRatioDesc').textContent='ลงทุน '+fmtB(principal)+' ได้กำไร '+fmtB(profit);
+
+  const labels=Array.from({length:years},(_,i)=>'ปี '+(i+1));
+
+  if(chart){
+    chart.data.labels=labels;
+    chart.data.datasets[0].data=principalArr;
+    chart.data.datasets[1].data=profitArr;
+    chart.update('none');
+  }else{
+    chart=new Chart(document.getElementById('cpChart'),{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'เงินต้น',data:principalArr,backgroundColor:'#1a3a5a',stack:'s'},
+          {label:'ดอกเบี้ย',data:profitArr,backgroundColor:'#00ffe7',stack:'s'}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{
+          callbacks:{
+            title:ctx=>'ปีที่ '+(ctx[0].dataIndex+1),
+            label:ctx=>' '+ctx.dataset.label+': '+fmtB(ctx.parsed.y)
+          },
+          backgroundColor:'#0d1525',borderColor:'#1a3a6a',borderWidth:1,
+          titleColor:'#00ffe7',bodyColor:'#a0c0e0',
+          padding:10
+        }},
+        scales:{
+          x:{stacked:true,ticks:{color:'#3a5a7a',font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:8},grid:{color:'#0f1820'}},
+          y:{stacked:true,ticks:{color:'#3a5a7a',font:{size:10},callback:v=>{
+            if(v>=1e6)return(v/1e6).toFixed(1)+'M';
+            if(v>=1e3)return(v/1e3).toFixed(0)+'K';
+            return v;
+          }},grid:{color:'#0f1820'}}
+        }
+      }
+    });
+  }
+}
+
+['sMonthly','sRate','sYears'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+update();
+</script>
+</body>
+</html>
