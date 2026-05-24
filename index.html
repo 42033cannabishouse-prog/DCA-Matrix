@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>DCA Matrix</title>
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -395,5 +396,6 @@ function update(){
 ['sMonthly','sRate','sYears'].forEach(id=>document.getElementById(id).addEventListener('input',update));
 update();
 </script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/DCA-Matrix/sw.js").then(reg=>{reg.addEventListener("updatefound",()=>{const w=reg.installing;w.addEventListener("statechange",()=>{if(w.state==="installed"</body></body>navigator.serviceWorker.controller){console.log("New version ready")}})})})}</script>
 </body>
 </html>
